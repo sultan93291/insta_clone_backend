@@ -51,14 +51,33 @@ const signupUser = asyncHandler(async (req, res, next) => {
     return next(new ApiError(400, "Username is required", null, false));
   }
 
-  // Check if email or username is already in use
-  const isExistedUser = await userModel.findOne({
-    $or: [{ email }, { userName }],
-  });
+  // Check if email exists
+  const existingEmailUser = await userModel.findOne({ email });
 
-  if (isExistedUser) {
+  // Check if username exists
+  const existingUsernameUser = await userModel.findOne({ userName });
+
+  // Throw an error if the email is already registered
+  if (existingEmailUser) {
     return next(
-      new ApiError(400, "Already registered, please login", null, false)
+      new ApiError(
+        400,
+        "Email is already in use, please choose another",
+        null,
+        false
+      )
+    );
+  }
+
+  // Throw an error if the username is already in use
+  if (existingUsernameUser) {
+    return next(
+      new ApiError(
+        400,
+        "Username already in use, please choose another",
+        null,
+        false
+      )
     );
   }
 
@@ -144,9 +163,7 @@ const loginUser = asyncHandler(async (req, res, next) => {
   return res
     .status(200)
     .cookie("access_token", token, options) // Ensure 'options' is defined correctly
-    .json(
-      new ApiSuccess(true, "Successfully logged in", 200, userData, false) 
-    );
+    .json(new ApiSuccess(true, "Successfully logged in", 200, userData, false));
 });
 
 // Function to retrieve user profile information
