@@ -19,6 +19,8 @@ const asyncHandler = (fun = () => {}) => {
     try {
       await fun(req, res, next); // Call the provided asynchronous function
     } catch (error) {
+      console.log(error);
+      
       next(
         new ApiError(500, "Async Handler Error: " + error.message, null, false) // Pass the error to the next middleware
       );

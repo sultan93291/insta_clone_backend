@@ -33,6 +33,10 @@ const userSchema = new Schema(
       type: String,
       default: "", // default value if no profile picture is provided
     },
+    fullName: {
+      type: String,
+      required: [true, "full name is required"], // Full name is mandatory
+    },
     gender: {
       type: String,
       enum: ["male", "female"], // only allow 'male' or 'female' values
@@ -65,6 +69,16 @@ const userSchema = new Schema(
         ref: "post", // reference to the post model
       },
     ],
+    refreshToken: {
+      type: String,
+    },
+    resetToken: {
+      type: String,
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true } // automatically manage createdAt and updatedAt fields
 );

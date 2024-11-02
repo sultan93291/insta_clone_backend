@@ -9,45 +9,45 @@
 }
 
 // External dependencies
-const express = require("express");
-const chalk = require("chalk");
-const cors = require("cors");
-const cookieParser = require("cookie-parser");
+const express = require("express"); // Express framework for building APIs
+const chalk = require("chalk"); // Chalk for colorful console logs
+const cors = require("cors"); // CORS middleware for handling cross-origin requests
+const cookieParser = require("cookie-parser"); // Middleware for parsing cookies
 
 // Internal dependencies
-const allRoutes = require("./src/Routes/index")
+const allRoutes = require("./src/Routes/index"); // Import all defined routes
 
 // Initialize the router and app instances
-const app = express();
+const app = express(); // Create an instance of the express app
 
-// accessing all  routes though  the router
-app.use(allRoutes)
 
 // Set up the server port, defaulting to 8000 if not specified
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.PORT || 8000; // Use environment variable or default to 8000
 
 // Middleware for parsing JSON request bodies
-app.use(express.json());
+app.use(express.json()); // Enable parsing of JSON payloads in incoming requests
 
 // Middleware for parsing URL-encoded request bodies
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true })); // Enable parsing of URL-encoded payloads
 
 // Enable Cross-Origin Resource Sharing (CORS)
-app.use(cors());
+app.use(cors()); // Allow cross-origin requests for all routes
 
 // Parse cookies for incoming requests
-app.use(cookieParser());
+app.use(cookieParser()); // Enable cookie parsing for incoming requests
 
-
+// Apply all routes
+app.use(allRoutes); // Use all routes imported from the routes file
 
 // Main error handler function for capturing and responding with errors
 app.use((err, req, res, next) => {
-  const statusCode = err.status || 500;
+  // Capture errors that occur during request handling
+  const statusCode = err.status || 500; // Set status code to error's status or 500 by default
   res.status(statusCode).json({
-    statusCode: statusCode,
-    success: false,
-    message: err.message,
-    data: err.data || null,
+    statusCode: statusCode, // Response status code
+    success: false, // Success flag
+    message: err.message, // Error message
+    data: err.data || null, // Additional error data, if available
   });
 });
 
@@ -57,5 +57,5 @@ app.listen(PORT, () => {
     chalk.bgBlueBright(
       `Listening on port http://localhost:${PORT}${process.env.API_VERSION}`
     )
-  );
+  ); // Display a message with the URL where the server is running
 });
