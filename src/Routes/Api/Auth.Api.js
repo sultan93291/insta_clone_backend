@@ -11,10 +11,11 @@ const express = require("express"); // Import express for routing
 const router = express.Router(); // Create a new router instance
 
 // Import the controller functions
-const { signupUser } = require("../../Controller/user.Controller"); // Import signup user function from the controller
+const { signupUser , loginUser } = require("../../Controller/user.Controller"); // Import signup user function from the controller
 
 // Define routes
 router.route("/signup").post(signupUser); // Route for user signup
+router.route("/login").post(loginUser); // Route for user login
 
 // Export the router to be used in the main application
 module.exports = router;

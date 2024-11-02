@@ -21,9 +21,15 @@ const { ApiSuccess } = require("../Utils/ApiSuccess");
 const { asyncHandler } = require("../Utils/asyncHandler");
 const { emailChecker, passwordChecker } = require("../Utils/checker");
 
+// secure cookies
+const options = {
+  httpOnly: true,
+  secure: true,
+};
+
 // Function to handle user signup
 const signupUser = asyncHandler(async (req, res, next) => {
-  const { email, password, userName, fullName } =  req.body;
+  const { email, password, userName, fullName } = req.body;
 
   // Validate email
   if (!email || !emailChecker(email)) {
@@ -88,17 +94,59 @@ const signupUser = asyncHandler(async (req, res, next) => {
     .json(new ApiSuccess(true, "User created successfully", 201, savedUser));
 });
 
-
 // Function to handle user login
 const loginUser = asyncHandler(async (req, res, next) => {
-  // Logic for logging in the user will go here
-  // const userData = {
-  //   userId: savedUser?._id,
-  //   userName: savedUser?.userName,
-  //   userEmail: savedUser?.email,
-  //   isVerified: savedUser?.isVerified,
-  // };
-  // const token = await createSessionToken(userData);
+  // Extract email and password from the request body
+  const { email, password } = req.body;
+
+  // Validate email format
+  if (!email || !emailChecker(email)) {
+    return next(new ApiError(400, "Invalid email format", null, false));
+  }
+
+  // Validate password format
+  if (!password || !passwordChecker(password)) {
+    return next(new ApiError(400, "Invalid password format", null, false));
+  }
+
+  // Check if the user exists with the given email
+  const existingUser = await userModel.findOne({ email });
+
+  // If the user does not exist, return an error
+  if (!existingUser) {
+    return next(new ApiError(400, "Invalid username or password", null, false));
+  }
+
+  // Verify the provided password with the stored hashed password
+  const isVerifiedPass = await verifyPassword(password, existingUser.password);
+
+  // If the password is incorrect, return an error
+  if (!isVerifiedPass) {
+    return next(new ApiError(400, "Invalid username or password", null, false));
+  }
+
+  // Prepare user data for the session
+  const userData = {
+    userId: existingUser._id,
+    userName: existingUser.userName,
+    userEmail: existingUser.email,
+    isVerified: existingUser.isVerified,
+  };
+
+  // Create a session token for the user
+  const token = await createSessionToken(userData);
+
+  // Store the refresh token in the user document
+  existingUser.refreshToken = token;
+  await existingUser.save(); // Make sure to await the save operation
+
+  // Send the token as a cookie and return a success response
+  return res
+    .status(200)
+    .cookie("access_token", token, options) // Ensure 'options' is defined correctly
+    .json(
+      new ApiSuccess(true, "Successfully logged in", 200, userData, false) 
+    );
 });
 
 // Function to retrieve user profile information
