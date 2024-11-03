@@ -172,9 +172,7 @@ const getUserProfile = asyncHandler(async (req, res, next) => {
   const { userName } = req.params;
 
   // Find user by userName
-  const isExistedUser = await userModel
-    .findOne({ userName })
-
+  const isExistedUser = await userModel.findOne({ userName });
 
   // If user does not exist, return an error
   if (!isExistedUser) {
@@ -214,14 +212,13 @@ const updateUser = asyncHandler(async (req, res, next) => {
   // Logic to update user details will go here
 });
 
-// Function to handle user sign-out
-const signOutUser = asyncHandler(async (req, res, next) => {
-  // Logic for signing out the user will go here
-});
-
 // Function to handle user logout
 const logOutUser = asyncHandler(async (req, res, next) => {
-  // Logic for logging out the user will go here
+  // Clear the 'access_token' cookie by setting it to an empty value with custom options
+  return res
+    .status(200)
+    .cookie("access_token", "", options)
+    .json(new ApiSuccess(true, "successfully logged out", 200, null, false));
 });
 
 module.exports = {
@@ -229,6 +226,5 @@ module.exports = {
   loginUser,
   getUserProfile,
   updateUser,
-  signOutUser,
   logOutUser,
 };
