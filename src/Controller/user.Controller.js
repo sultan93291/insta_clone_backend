@@ -209,7 +209,69 @@ const getUserProfile = asyncHandler(async (req, res, next) => {
 
 // Function to update user information
 const updateUser = asyncHandler(async (req, res, next) => {
-  // Logic to update user details will go here
+  const { userName, email, bio, gender, fullName, profilePicture } = req.body;
+
+  // Check if none of the fields are provided
+  if (!userName && !email && !bio && !gender && !fullName && !profilePicture) {
+    return next(
+      new ApiError(
+        400,
+        "Nothing to update. Please provide data to update and try again.",
+        null,
+        false
+      )
+    );
+  }
+
+  // Validate email if it's provided
+  if (email && !emailChecker(email)) {
+    return next(new ApiError(400, "Invalid email format", null, false));
+  }
+
+  // Retrieve user information from token in cookie
+  const decodedData = await decodeSessionToken(req);
+  const isExistedUser = await userModel.findById(decodedData?.userData?.userId);
+
+  if (!isExistedUser) {
+    return next(new ApiError(400, "User doesn't exist", null, false));
+  }
+
+  // Update only fields that are provided in the request
+  isExistedUser.userName = userName || isExistedUser.userName;
+  isExistedUser.email = email || isExistedUser.email;
+  isExistedUser.bio = bio || isExistedUser.bio;
+  isExistedUser.gender = gender || isExistedUser.gender;
+  isExistedUser.fullName = fullName || isExistedUser.fullName;
+  isExistedUser.profilePicture = profilePicture || isExistedUser.profilePicture;
+
+  // Save the updated user document
+  await isExistedUser.save();
+
+  // Prepare response data
+  const userData = {
+    userName: isExistedUser.userName,
+    fullName: isExistedUser.fullName,
+    profilePicture: isExistedUser.profilePicture,
+    bio: isExistedUser.bio,
+    isVerified: isExistedUser.isVerified,
+    followersCount: isExistedUser.followers.length,
+    followingCount: isExistedUser.following.length,
+    posts: isExistedUser.posts, // Includes populated posts details
+    bookmarks: isExistedUser.bookmarks, // Includes populated bookmarks details
+    createdAt: isExistedUser.createdAt,
+  };
+
+  return res
+    .status(200)
+    .json(
+      new ApiSuccess(
+        true,
+        "Successfully updated user data",
+        200,
+        userData,
+        false
+      )
+    );
 });
 
 // Function to handle user logout

@@ -11,33 +11,46 @@ const express = require("express"); // Import express for routing
 const router = express.Router(); // Create a new router instance
 
 // Import helper functions
-const { authguard } = require("../../Middlerware/authGuard"); // Import authguard middleware for route protection
+const { authguard } = require("../../Middlerware/authGuard"); // Middleware for route protection
 
-// Import the controller functions
+// Import controller functions
 const {
   signupUser,
   loginUser,
   getUserProfile,
   logOutUser,
-} = require("../../Controller/user.Controller"); // Import user-related controller functions
+  updateUser,
+} = require("../../Controller/user.Controller"); // User-related controller functions
 
-// Define routes
+// ========================
+// User Authentication Routes
+// ========================
 
-// POST /signup - Route for user signup
-// Calls the signupUser controller function to handle user registration
+// POST /signup - Register a new user
 router.route("/signup").post(signupUser);
 
-// POST /login - Route for user login
-// Calls the loginUser controller function to handle user authentication
+// POST /login - Authenticate an existing user
 router.route("/login").post(loginUser);
 
-// GET /:userName - Route to get a user profile
-// Protected by authguard middleware. Calls getUserProfile to retrieve details for a specified user.
+// ========================
+// User Profile Routes
+// ========================
+
+// GET /:userName - Retrieve a user profile
+// Protected by authguard middleware
 router.route("/:userName").get(authguard, getUserProfile);
 
-// GET /accounts/logout - Route for user logout
-// Protected by authguard middleware. Calls logOutUser to log out the authenticated user and clear the session cookie.
+// GET /accounts/logout - Log out the authenticated user
+// Protected by authguard middleware
 router.route("/accounts/logout").get(authguard, logOutUser);
 
-// Export the router to be used in the main application
+// ========================
+// User Update Routes
+// ========================
+
+// PUT /accounts/edit - Update user profile information
+// Protected by authguard middleware
+router.route("/accounts/edit").put(authguard, updateUser);
+
+// Export the router for use in the main application
 module.exports = router;
