@@ -23,6 +23,7 @@ const {
   getUserProfile,
   logOutUser,
   updateUser,
+  getSuggestedUsers
 } = require("../../Controller/user.Controller"); // User-related controller functions
 
 // ========================
@@ -46,6 +47,8 @@ router.route("/:userName").get(authguard, getUserProfile);
 // GET /accounts/logout - Log out the authenticated user
 // Protected by authguard middleware
 router.route("/accounts/logout").get(authguard, logOutUser);
+
+router.route("/accounts/suggested-users").get(authguard, getSuggestedUsers);
 
 // ========================
 // User Update Routes

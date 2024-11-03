@@ -286,6 +286,34 @@ const updateUser = asyncHandler(async (req, res, next) => {
     );
 });
 
+// Function to get suggested users
+const getSuggestedUsers = asyncHandler(async (req, res, next) => {
+  // Retrieve user information from token in cookie
+  const decodedData = await decodeSessionToken(req);
+
+  // Fetch users excluding the current user
+  const suggestedUsers = await userModel
+    .find({ _id: { $ne: decodedData?.userData?.userId } })
+    .select("-password");
+
+  // Check if there are no suggested users
+  if (suggestedUsers.length === 0) {
+    return next(new ApiError(400, "Currently no suggested users", null, false));
+  }
+
+  // Return the suggested users
+  return res.status(200).json(
+    new ApiSuccess(
+      true,
+      "Successfully retrieved suggested users",
+      200,
+      suggestedUsers,
+      false
+    )
+  );
+});
+
+
 // Function to handle user logout
 const logOutUser = asyncHandler(async (req, res, next) => {
   // Clear the 'access_token' cookie by setting it to an empty value with custom options
@@ -301,4 +329,5 @@ module.exports = {
   getUserProfile,
   updateUser,
   logOutUser,
+  getSuggestedUsers
 };
