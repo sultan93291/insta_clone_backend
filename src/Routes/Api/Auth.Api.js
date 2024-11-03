@@ -10,8 +10,11 @@
 const express = require("express"); // Import express for routing
 const router = express.Router(); // Create a new router instance
 
+
 // Import helper functions
 const { authguard } = require("../../Middlerware/authGuard"); // Middleware for route protection
+const { tempUpload } = require("../../Middlerware/multer.middleware");
+
 
 // Import controller functions
 const {
@@ -50,7 +53,9 @@ router.route("/accounts/logout").get(authguard, logOutUser);
 
 // PUT /accounts/edit - Update user profile information
 // Protected by authguard middleware
-router.route("/accounts/edit").put(authguard, updateUser);
+router
+  .route("/accounts/edit")
+  .put(authguard, tempUpload.single("profilePicture"), updateUser);
 
 // Export the router for use in the main application
 module.exports = router;

@@ -20,6 +20,7 @@ const { ApiError } = require("../Utils/ApiError");
 const { ApiSuccess } = require("../Utils/ApiSuccess");
 const { asyncHandler } = require("../Utils/asyncHandler");
 const { emailChecker, passwordChecker } = require("../Utils/checker");
+const { uploadCloudinary } = require("../Utils/upCloudinary");
 
 // secure cookies
 const options = {
@@ -209,7 +210,11 @@ const getUserProfile = asyncHandler(async (req, res, next) => {
 
 // Function to update user information
 const updateUser = asyncHandler(async (req, res, next) => {
-  const { userName, email, bio, gender, fullName, profilePicture } = req.body;
+  // retrieve user updated data from body
+  const { userName, email, bio, gender, fullName } = req.body;
+
+  // retrieve profile picture from request file
+  const profilePicture = req.file;
 
   // Check if none of the fields are provided
   if (!userName && !email && !bio && !gender && !fullName && !profilePicture) {
@@ -236,13 +241,20 @@ const updateUser = asyncHandler(async (req, res, next) => {
     return next(new ApiError(400, "User doesn't exist", null, false));
   }
 
+  let imageurl;
+
+  if (profilePicture) {
+    imageurl = await uploadCloudinary(profilePicture.path);
+  }
+
   // Update only fields that are provided in the request
   isExistedUser.userName = userName || isExistedUser.userName;
   isExistedUser.email = email || isExistedUser.email;
   isExistedUser.bio = bio || isExistedUser.bio;
   isExistedUser.gender = gender || isExistedUser.gender;
   isExistedUser.fullName = fullName || isExistedUser.fullName;
-  isExistedUser.profilePicture = profilePicture || isExistedUser.profilePicture;
+  isExistedUser.profilePicture =
+    imageurl.secure_url || isExistedUser.profilePicture;
 
   // Save the updated user document
   await isExistedUser.save();
