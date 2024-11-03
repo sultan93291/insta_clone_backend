@@ -21,6 +21,7 @@ const { ApiSuccess } = require("../Utils/ApiSuccess");
 const { asyncHandler } = require("../Utils/asyncHandler");
 const { emailChecker, passwordChecker } = require("../Utils/checker");
 const { uploadCloudinary } = require("../Utils/upCloudinary");
+const { promises } = require("nodemailer/lib/xoauth2");
 
 // secure cookies
 const options = {
@@ -302,17 +303,77 @@ const getSuggestedUsers = asyncHandler(async (req, res, next) => {
   }
 
   // Return the suggested users
-  return res.status(200).json(
-    new ApiSuccess(
-      true,
-      "Successfully retrieved suggested users",
-      200,
-      suggestedUsers,
-      false
-    )
-  );
+  return res
+    .status(200)
+    .json(
+      new ApiSuccess(
+        true,
+        "Successfully retrieved suggested users",
+        200,
+        suggestedUsers,
+        false
+      )
+    );
 });
 
+// Function to  follow or unfollow a user
+const followAndUnfollow = asyncHandler(async (req, res, next) => {
+  // Retrieve data from params
+  const { username } = req.params;
+  // Retrieve user information from token in cookie
+  const decodedData = await decodeSessionToken(req);
+
+  // Fetch the logged-in user
+  const loggedInUser = await userModel.findById(decodedData?.userData?.userId);
+  const targetedUser = await userModel.findOne({ userName: username });
+
+  if (!loggedInUser) {
+    return next(new ApiError(400, "Logged in user doesn't exist", null, false));
+  }
+  if (!targetedUser) {
+    return next(new ApiError(400, "User doesn't exist", null, false));
+  }
+
+  if (loggedInUser._id.equals(targetedUser._id)) {
+    return next(new ApiError(400, "You can't follow yourself", null, false));
+  }
+
+  const isFollowing = loggedInUser.following.includes(targetedUser._id);
+
+  if (isFollowing) {
+    // Unfollow: remove the targeted user from the logged-in user's following list
+    // and remove the logged-in user from the targeted user's follower list
+    await Promise.all([
+      userModel.findByIdAndUpdate(loggedInUser._id, {
+        $pull: { following: targetedUser._id },
+      }),
+      userModel.findByIdAndUpdate(targetedUser._id, {
+        $pull: { followers: loggedInUser._id }, // Remove from followers
+      }),
+    ]);
+    return res
+      .status(200)
+      .json(
+        new ApiSuccess(true, `Successfully unfollowed ${targetedUser.userName}`)
+      );
+  } else {
+    // Follow: add the targeted user to the logged-in user's following list
+    // and add the logged-in user to the targeted user's follower list
+    await Promise.all([
+      userModel.findByIdAndUpdate(loggedInUser._id, {
+        $push: { following: targetedUser._id },
+      }),
+      userModel.findByIdAndUpdate(targetedUser._id, {
+        $push: { followers: loggedInUser._id }, // Add to followers
+      }),
+    ]);
+    return res
+      .status(200)
+      .json(
+        new ApiSuccess(true, `Successfully followed ${targetedUser.userName}`)
+      );
+  }
+});
 
 // Function to handle user logout
 const logOutUser = asyncHandler(async (req, res, next) => {
@@ -329,5 +390,6 @@ module.exports = {
   getUserProfile,
   updateUser,
   logOutUser,
-  getSuggestedUsers
+  getSuggestedUsers,
+  followAndUnfollow
 };
