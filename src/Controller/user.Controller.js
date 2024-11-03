@@ -168,7 +168,45 @@ const loginUser = asyncHandler(async (req, res, next) => {
 
 // Function to retrieve user profile information
 const getUserProfile = asyncHandler(async (req, res, next) => {
-  // Logic to fetch user profile data will go here
+  // Get userName from request parameters
+  const { userName } = req.params;
+
+  // Find user by userName
+  const isExistedUser = await userModel
+    .findOne({ userName })
+
+
+  // If user does not exist, return an error
+  if (!isExistedUser) {
+    return next(new ApiError(400, "User doesn't exist", null, false));
+  }
+
+  // Prepare user data for response
+  const userData = {
+    userName: isExistedUser.userName,
+    fullName: isExistedUser.fullName,
+    profilePicture: isExistedUser.profilePicture,
+    bio: isExistedUser.bio,
+    isVerified: isExistedUser.isVerified,
+    followersCount: isExistedUser.followers.length,
+    followingCount: isExistedUser.following.length,
+    posts: isExistedUser.posts, // Includes populated posts details
+    bookmarks: isExistedUser.bookmarks, // Includes populated bookmarks details
+    createdAt: isExistedUser.createdAt,
+  };
+
+  // Return successful response
+  return res
+    .status(200)
+    .json(
+      new ApiSuccess(
+        true,
+        "Successfully retrieved user profile",
+        200,
+        userData,
+        false
+      )
+    );
 });
 
 // Function to update user information
