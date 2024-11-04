@@ -20,8 +20,14 @@ const postSchema = new Schema(
       default: "", // Default value if no caption is provided
     },
     image: {
-      type: String,
-      required: [true, "image is required"], // Image is mandatory
+      type: [String], // Array of strings to store multiple image URLs
+      required: [true, "At least one image is required"],
+      validate: {
+        validator: function (array) {
+          return array.length > 0;
+        },
+        message: "At least one image is required",
+      },
     },
     author: {
       type: mongoose.Schema.Types.ObjectId,

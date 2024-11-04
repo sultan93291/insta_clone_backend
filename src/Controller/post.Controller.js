@@ -1,14 +1,12 @@
 /*
- * author: Md. Abib Ahmed Dipto
- * date: 11-02-2024
- * description: Controller file for user-related actions, including signup, login, profile management, and logout.
+ * Author: Md. Abib Ahmed Dipto
+ * Date: 11-05-2024
+ * Description: Controller file for user-related actions, including signup, login, profile management, and logout.
  */
 
 // Dependencies
 
 // Internal dependencies
-
-const { createTestAccount } = require("nodemailer");
 const {
   hashUserPassword,
   verifyPassword,
@@ -20,14 +18,25 @@ const { asyncHandler } = require("../Utils/asyncHandler");
 const { uploadCloudinary } = require("../Utils/upCloudinary");
 const { ApiError } = require("../Utils/ApiError");
 const { ApiSuccess } = require("../Utils/ApiSuccess");
+const { postModel } = require("../Schema/post.model");
+const { userModel } = require("../Schema/user.model");
 
 const createPost = asyncHandler(async (req, res, next) => {
   const { caption, likes, comments } = req.body;
   const images = req.files?.image;
 
+  // Retrieve user information from token in cookie
+  const decodedData = await decodeSessionToken(req);
+
+  const isExistedUser = await userModel.findById(decodedData?.userData?.userId);
+
+  if (!isExistedUser) {
+    return next(new ApiError(400, "No user exists", null, false));
+  }
+
   // Check if images are provided
   if (!images || images.length === 0) {
-    return res.status(400).json({ message: "No images provided." });
+    return next(new ApiError(400, "No image found", null, false));
   }
 
   // Map over the images array to get their file paths
@@ -35,11 +44,35 @@ const createPost = asyncHandler(async (req, res, next) => {
 
   // Upload images to Cloudinary and set the target folder
   const cloudinaryResults = await uploadCloudinary(imagePaths, "postImages");
-  if (cloudinaryResults) {
-    console.log(cloudinaryResults);
-    return res.send("ok");
+
+  const imageUrls = cloudinaryResults.map((result) => result.secure_url); // Assuming Cloudinary returns 'secure_url'
+
+  const newPost = new postModel({
+    caption,
+    image: imageUrls,
+    author: isExistedUser._id,
+    likes,
+    comments,
+  });
+
+  const savedPost = await newPost.save();
+
+  if (!savedPost) {
+    return next(
+      new ApiError(
+        400,
+        "Can't create a post at the moment, please try again later",
+        null,
+        false
+      )
+    );
   }
-  
+
+  return res
+    .status(200)
+    .json(
+      new ApiSuccess(true, "Successfully created post", 200, savedPost, false)
+    );
 });
 
 module.exports = { createPost };

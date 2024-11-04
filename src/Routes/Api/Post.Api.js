@@ -1,8 +1,8 @@
 /*
  * Author: Md. Abib Ahmed Dipto
- * Date: 04-10-2024
- * Description: Defines the routing for user authentication-related API endpoints,
- * including routes for user signup, login, profile retrieval, and logout functionalities.
+ * Date: 11-05-2024
+ * Description: Defines routing for post-related API endpoints in the Instagram clone application,
+ *              including creating posts with multiple images.
  * Copyright: abib.web.dev@gmail.com
  */
 
@@ -10,7 +10,7 @@
 const express = require("express");
 const router = express.Router();
 
-// Import helper functions
+// Import middleware
 const { authguard } = require("../../Middlerware/authGuard");
 const { uploadImages } = require("../../Middlerware/multer.middleware");
 
@@ -18,17 +18,15 @@ const { uploadImages } = require("../../Middlerware/multer.middleware");
 const { createPost } = require("../../Controller/post.Controller");
 
 // ========================
-// User Authentication Routes
+// Post Routes for Instagram Clone
 // ========================
 
-// POST /signup - Register a new user
-router
-  .route("/create-post")
-  .post(
-    authguard,
-    uploadImages.fields([{ name: "image", maxCount: 10 }]),
-    createPost
-  );
+// POST /create-post - Create a new post with multiple images
+router.route("/create-post").post(
+  authguard,
+  uploadImages.fields([{ name: "image", maxCount: 10 }]), // Allow up to 10 images per post
+  createPost
+);
 
 // Export the router for use in the main application
 module.exports = router;
