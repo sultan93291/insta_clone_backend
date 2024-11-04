@@ -20,7 +20,7 @@ const { ApiError } = require("../Utils/ApiError");
 const { ApiSuccess } = require("../Utils/ApiSuccess");
 const { asyncHandler } = require("../Utils/asyncHandler");
 const { emailChecker, passwordChecker } = require("../Utils/checker");
-const { uploadCloudinary } = require("../Utils/upCloudinary");
+const {uploadCloudinary} = require("../Utils/upCloudinary")
 const { promises } = require("nodemailer/lib/xoauth2");
 
 // secure cookies
@@ -245,7 +245,7 @@ const updateUser = asyncHandler(async (req, res, next) => {
   let imageurl;
 
   if (profilePicture) {
-    imageurl = await uploadCloudinary(profilePicture.path);
+    imageurl = await uploadCloudinary(profilePicture.path,"profilePicture");
   }
 
   // Update only fields that are provided in the request

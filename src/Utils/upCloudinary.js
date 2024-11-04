@@ -18,23 +18,27 @@ cloudinary.config({
 });
 
 /**
- * Asynchronously uploads an image file to Cloudinary and deletes the local file after a successful upload.
- * @param {string} localFilePath - The path to the local file to be uploaded.
- * @returns {Promise<Object|null>} The result of the upload operation or null if an error occurred.
+ * Uploads an array of image files to Cloudinary and deletes local files after a successful upload.
+ * @param {string[]} localFilePaths - Array of paths to local files to be uploaded.
+ * @param {string} folder - The target folder in Cloudinary for uploaded files (e.g., "profilePictures" or "postImages").
+ * @returns {Promise<Array>} An array of results from the upload operation, or an error for any failed uploads.
  */
-const uploadCloudinary = async (localFilePath = "public/temp/demo.jpg") => {
+const uploadCloudinary = async (localFilePaths, folder) => {
   try {
-    // Upload the file to Cloudinary
-    const uploadResult = await cloudinary.uploader.upload(localFilePath, {
-      folder: "insta/images/profilePicture", // Target folder in Cloudinary
+    // Map each file path to a Cloudinary upload promise
+    const uploadPromises = localFilePaths.map(async (filePath) => {
+      const uploadResult = await cloudinary.uploader.upload(filePath, {
+        folder: `insta/images/${folder}`, // Use dynamic folder based on function argument
+      });
+      fs.unlinkSync(filePath); // Delete the local file after successful upload
+      return uploadResult; // Return the Cloudinary upload result
     });
 
-    // Delete the local file after a successful upload
-    fs.unlinkSync(localFilePath); // Synchronously remove the local file
-
-    return uploadResult; // Return the result of the upload operation
+    // Wait for all uploads to complete
+    const results = await Promise.all(uploadPromises);
+    return results; // Return array of upload results
   } catch (error) {
-    console.error("Error uploading to Cloudinary:", error); // Log any errors that occur during upload
+    console.error("Error uploading multiple images to Cloudinary:", error);
     return null; // Return null in case of an error
   }
 };

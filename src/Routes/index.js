@@ -5,7 +5,8 @@ const router = Router();
 // Internal dependencies
 
 // All route dependencies for the Insta Clone app
-const authRoutes = require("./Api/Auth.Api")
+const authRoutes = require("./Api/Auth.Api");
+const postRoutes = require("./Api/Post.Api");
 
 // Helper files for standardizing API responses
 const { ApiError } = require("../Utils/ApiError");
@@ -27,6 +28,8 @@ router.route(process.env.API_VERSION).get((req, res) => {
 
 // Use defined routes with the specified version name
 router.use(process.env.API_VERSION, authRoutes);
+router.use(process.env.API_VERSION, postRoutes);
+
 // Handle invalid routes
 router.use(process.env.API_VERSION, (req, res) => {
   res.status(404).json(new ApiError(404, "API Route Invalid!", null, false));

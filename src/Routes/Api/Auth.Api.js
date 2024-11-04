@@ -12,7 +12,7 @@ const router = express.Router();
 
 // Import helper functions
 const { authguard } = require("../../Middlerware/authGuard");
-const { tempUpload } = require("../../Middlerware/multer.middleware");
+const { uploadProfilePic } = require("../../Middlerware/multer.middleware");
 
 // Import controller functions
 const {
@@ -56,12 +56,12 @@ router.get("/accounts/suggested-users", authguard, getSuggestedUsers);
 router.put(
   "/accounts/edit",
   authguard,
-  tempUpload.single("profilePicture"),
+  uploadProfilePic.single("profilePicture"),
   updateUser
 );
 
 // PUT /accounts/:username - Follow or unfollow a user (Protected)
-router.put("/accounts/:username", authguard, followAndUnfollow);
+router.put("/accounts/follow-unfollow/:username", authguard, followAndUnfollow);
 
 // Export the router for use in the main application
 module.exports = router;

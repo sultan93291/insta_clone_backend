@@ -7,37 +7,70 @@
 
 const multer = require("multer");
 
-// Configure storage options for multer
-const storage = multer.diskStorage({
-  // Define destination directory for uploaded files
+// Configure storage for profile pictures
+const profilePicStorage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "./public/temp"); // Store uploaded files in the 'public/temp' directory
+    cb(null, "./public/temp/profile"); // Directory for profile pictures
   },
-  // Preserve original file name for the uploaded file
   filename: function (req, file, cb) {
-    cb(null, file.originalname); // Use the original file name for the uploaded file
+    cb(null, file.originalname); // Use original file name
   },
 });
 
-// Initialize multer with defined storage configuration
-const tempUpload = multer({
-  storage: storage,
-  limits: {
-    fileSize: 5 * 1024 * 1024, // Set limit for file size (5 MB) - Instagram has limits on media file sizes
+// Configure storage for other images
+const imageStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "./public/temp/images"); // Directory for other images
   },
-  fileFilter: (req, file, cb) => {
-    // Allow only specific file types (e.g., images) for Instagram
-    const filetypes = /jpeg|jpg|png|gif/; // Supported file types
-    const mimetype = filetypes.test(file.mimetype); // Check if file type is valid
-    const extname = filetypes.test(
-      file.originalname.split(".").pop().toLowerCase()
-    ); // Check file extension
-
-    if (mimetype && extname) {
-      return cb(null, true); // Accept file
-    }
-    cb(new Error("Error: File type not supported!")); // Reject file if invalid
+  filename: function (req, file, cb) {
+    cb(null, file.originalname); // Use original file name
   },
 });
 
-module.exports = { tempUpload };
+// Define file filter for profile pictures (JPEG and PNG only)
+const profilePicFilter = (req, file, cb) => {
+  const filetypes = /jpeg|jpg|png/;
+  const mimetype = filetypes.test(file.mimetype);
+  const extname = filetypes.test(
+    file.originalname.split(".").pop().toLowerCase()
+  );
+
+  if (mimetype && extname) {
+    return cb(null, true);
+  }
+  cb(
+    new Error(
+      "Error: Only JPEG and PNG files are allowed for profile pictures!"
+    )
+  );
+};
+
+// Define file filter for other images (JPEG, PNG, and GIF allowed)
+const imageFilter = (req, file, cb) => {
+  const filetypes = /jpeg|jpg|png|gif/;
+  const mimetype = filetypes.test(file.mimetype);
+  const extname = filetypes.test(
+    file.originalname.split(".").pop().toLowerCase()
+  );
+
+  if (mimetype && extname) {
+    return cb(null, true);
+  }
+  cb(new Error("Error: File type not supported!"));
+};
+
+// Initialize multer for profile pictures (single file)
+const uploadProfilePic = multer({
+  storage: profilePicStorage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // Limit of 5 MB
+  fileFilter: profilePicFilter,
+});
+
+// Initialize multer for other images (multiple files)
+const uploadImages = multer({
+  storage: imageStorage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // Limit of 5 MB per file
+  fileFilter: imageFilter,
+});
+
+module.exports = { uploadProfilePic, uploadImages };
