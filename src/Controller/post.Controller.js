@@ -56,6 +56,14 @@ const createPost = asyncHandler(async (req, res, next) => {
   });
 
   const savedPost = await newPost.save();
+  isExistedUser.posts = savedPost._id;
+  await isExistedUser.save();
+
+const responseData = await savedPost.populate({
+  path: "author",
+  select: "-password -refreshToken", // Exclude sensitive fields
+});
+
 
   if (!savedPost) {
     return next(
@@ -71,7 +79,7 @@ const createPost = asyncHandler(async (req, res, next) => {
   return res
     .status(200)
     .json(
-      new ApiSuccess(true, "Successfully created post", 200, savedPost, false)
+      new ApiSuccess(true, "Successfully created post", 200, responseData, false)
     );
 });
 
