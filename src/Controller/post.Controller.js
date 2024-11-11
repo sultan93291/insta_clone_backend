@@ -20,6 +20,7 @@ const { ApiError } = require("../Utils/ApiError");
 const { ApiSuccess } = require("../Utils/ApiSuccess");
 const { postModel } = require("../Schema/post.model");
 const { userModel } = require("../Schema/user.model");
+const { commentModel } = require("../Schema/comment.model");
 
 const createPost = asyncHandler(async (req, res, next) => {
   const { caption, likes, comments } = req.body;
@@ -56,7 +57,9 @@ const createPost = asyncHandler(async (req, res, next) => {
   });
 
   const savedPost = await newPost.save();
-  isExistedUser.posts = savedPost._id;
+
+  // Push the saved post's ID to the user's posts array and save the user
+  isExistedUser.posts.push(savedPost._id);
   await isExistedUser.save();
 
   const responseData = await savedPost.populate({
@@ -119,12 +122,12 @@ const getAllPosts = asyncHandler(async (req, res, next) => {
 //get single user posts
 const getSingleUserPosts = asyncHandler(async (req, res, next) => {
   const { username } = req.params;
-  const isExistedUser = await userModel.findById(username);
+  const isExistedUser = await userModel.findOne({ userName: username });
   if (!isExistedUser) {
     return next(new ApiError(500, "User not found", null, false));
   }
   const userPosts = await postModel
-    .find({ id: isExistedUser._id })
+    .find({ author: isExistedUser._id })
     .sort({ createdAt: -1 })
     .populate({
       path: "author",
@@ -191,5 +194,67 @@ const likeDislikePost = asyncHandler(async (req, res, next) => {
   }
 });
 
+// Add comments to a post
+const addCommentToPost = asyncHandler(async (req, res, next) => {
+  const { postid } = req.params; // Retrieve post ID from request parameters
+  const { text } = req.body; // Retrieve comment text from request body
 
-module.exports = { createPost, getAllPosts, getSingleUserPosts,likeDislikePost };
+  // Check if the post exists
+  const isExistedPost = await postModel.findById(postid);
+  if (!isExistedPost) {
+    return next(new ApiError(404, "Post not found", null, false));
+  }
+
+  if (!text) {
+    return next(new ApiError(400, "Nothing to comment", null, false));
+  }
+
+  // Retrieve user information from token in cookie
+  const decodedData = await decodeSessionToken(req);
+  const loggedInUser = await userModel.findById(decodedData?.userData?.userId);
+  if (!loggedInUser) {
+    return next(
+      new ApiError(401, "Please log in again and try later", null, false)
+    );
+  }
+
+  // Create a new comment document
+  const newComment = new commentModel({
+    text: text, // Comment text
+    author: loggedInUser._id, // User ID of the author
+    post: postid, // Associated post ID
+  });
+
+  // Save the new comment to the database
+  const savedComment = await newComment.save();
+
+  // Check if the comment was successfully saved
+  if (!savedComment) {
+    return next(
+      new ApiError(
+        500,
+        "Can't add a comment right now, please try again later",
+        null,
+        false
+      )
+    );
+  }
+
+  // Add the new comment to the post's comment array (optional)
+  await isExistedPost.updateOne({ $push: { comments: savedComment._id } });
+
+  // Respond with success
+  return res
+    .status(200)
+    .json(
+      new ApiSuccess(true, "Successfully added a comment", savedComment, false)
+    );
+});
+
+module.exports = {
+  createPost,
+  getAllPosts,
+  getSingleUserPosts,
+  likeDislikePost,
+  addCommentToPost,
+};
