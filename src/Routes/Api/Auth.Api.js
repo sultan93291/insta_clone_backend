@@ -30,38 +30,37 @@ const {
 // ========================
 
 // POST /signup - Register a new user
-router.post("/signup", signupUser);
+router.route("/signup").post(authguard, signupUser);
 
 // POST /login - Authenticate an existing user
-router.post("/login", loginUser);
+router.route("/login").post(authguard,  loginUser);
 
 // ========================
 // User Profile Routes
 // ========================
 
 // GET /:userName - Retrieve a user profile (Protected)
-router.get("/:userName", authguard, getUserProfile);
+router.route("/:userName").get( authguard, getUserProfile);
 
 // GET /accounts/logout - Log out the authenticated user (Protected)
-router.get("/accounts/logout", authguard, logOutUser);
+router.route("/accounts/logout").get(authguard, logOutUser);
 
 // GET /accounts/suggested-users - Retrieve suggested users (Protected)
-router.get("/accounts/suggested-users", authguard, getSuggestedUsers);
+router.route("/accounts/suggested-users").get(authguard, getSuggestedUsers);
 
 // ========================
 // User Update Routes
 // ========================
 
 // PUT /accounts/edit - Update user profile information (Protected, with file upload)
-router.put(
-  "/accounts/edit",
-  authguard,
-  uploadProfilePic.single("profilePicture"),
-  updateUser
-);
+router
+  .route("/accounts/edit")
+  .put(authguard, uploadProfilePic.single("profilePicture"), updateUser);
 
 // PUT /accounts/:username - Follow or unfollow a user (Protected)
-router.put("/accounts/follow-unfollow/:username", authguard, followAndUnfollow);
+router
+  .route("/accounts/follow-unfollow/:username")
+  .put(authguard, followAndUnfollow);
 
 // Export the router for use in the main application
 module.exports = router;

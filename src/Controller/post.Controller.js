@@ -59,11 +59,10 @@ const createPost = asyncHandler(async (req, res, next) => {
   isExistedUser.posts = savedPost._id;
   await isExistedUser.save();
 
-const responseData = await savedPost.populate({
-  path: "author",
-  select: "-password -refreshToken", // Exclude sensitive fields
-});
-
+  const responseData = await savedPost.populate({
+    path: "author",
+    select: "-password -refreshToken", // Exclude sensitive fields
+  });
 
   if (!savedPost) {
     return next(
@@ -79,8 +78,75 @@ const responseData = await savedPost.populate({
   return res
     .status(200)
     .json(
-      new ApiSuccess(true, "Successfully created post", 200, responseData, false)
+      new ApiSuccess(
+        true,
+        "Successfully created post",
+        200,
+        responseData,
+        false
+      )
     );
 });
 
-module.exports = { createPost };
+// get all posts mechanisms
+const getAllPosts = asyncHandler(async (req, res, next) => {
+  const allPosts = await postModel
+    .find({})
+    .sort({ createdAt: -1 })
+    .populate({
+      path: "author",
+      select: "userName profilePicture",
+    })
+    .populate({ path: "likes" })
+    .populate({
+      path: "comments",
+      options: { sort: { createdAt: -1 } },
+      populate: {
+        path: "author",
+        select: "userName profilePicture",
+      },
+    });
+
+  if (allPosts.length < 1) {
+    return next(new ApiError(500, "Currently, there's no post", null, false));
+  }
+
+  return res
+    .status(200)
+    .json(new ApiSuccess(true, "All posts", 200, allPosts, false));
+});
+
+//get single user posts
+const getSingleUserPosts = asyncHandler(async (req, res, next) => {
+  const { username } = req.params;
+  const isExistedUser = await userModel.findById(username);
+  if (!isExistedUser) {
+    return next(new ApiError(500, "User not found", null, false));
+  }
+  const userPosts = await postModel
+    .find({ id: isExistedUser._id })
+    .sort({ createdAt: -1 })
+    .populate({
+      path: "author",
+      select: "userName profilePicture",
+    })
+    .populate({ path: "likes" })
+    .populate({
+      path: "comments",
+      options: { sort: { createdAt: -1 } },
+      populate: {
+        path: "author",
+        select: "userName profilePicture",
+      },
+    });
+
+  if (userPosts.length < 1) {
+    return next(new ApiError(500, "Currently, there's no post", null, false));
+  }
+
+  return res
+    .status(200)
+    .json(new ApiSuccess(true, "user posts", 200, userPosts, false));
+});
+
+module.exports = { createPost, getAllPosts };

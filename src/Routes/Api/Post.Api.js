@@ -15,7 +15,7 @@ const { authguard } = require("../../Middlerware/authGuard");
 const { uploadImages } = require("../../Middlerware/multer.middleware");
 
 // Import controller functions
-const { createPost } = require("../../Controller/post.Controller");
+const { createPost , getAllPosts } = require("../../Controller/post.Controller");
 
 // ========================
 // Post Routes for Instagram Clone
@@ -27,6 +27,9 @@ router.route("/create-post").post(
   uploadImages.fields([{ name: "image", maxCount: 10 }]), // Allow up to 10 images per post
   createPost
 );
+
+// get all posts
+router.route("/get/all-posts").get(authguard, getAllPosts);
 
 // Export the router for use in the main application
 module.exports = router;
