@@ -149,4 +149,47 @@ const getSingleUserPosts = asyncHandler(async (req, res, next) => {
     .json(new ApiSuccess(true, "user posts", 200, userPosts, false));
 });
 
-module.exports = { createPost, getAllPosts };
+// Like/Dislike a user's post mechanism
+const likeDislikePost = asyncHandler(async (req, res, next) => {
+  const { postid } = req.params;
+
+  // Check if the post exists
+  const isExistedPost = await postModel.findById(postid);
+  if (!isExistedPost) {
+    return next(new ApiError(404, "Post not found", null, false));
+  }
+
+  // Retrieve user information from token in cookie
+  const decodedData = await decodeSessionToken(req);
+  const loggedInUser = await userModel.findById(decodedData?.userData?.userId);
+  if (!loggedInUser) {
+    return next(
+      new ApiError(401, "Please log in again and try later", null, false)
+    );
+  }
+
+  // Check if the user already liked the post using MongoDB query
+  const isLiked = await postModel.findOne({
+    _id: postid,
+    likes: loggedInUser._id,
+  });
+
+  if (isLiked) {
+    // User has already liked the post, so we "unlike" the post
+    await isExistedPost.updateOne({ $pull: { likes: loggedInUser._id } });
+
+    return res
+      .status(200)
+      .json(new ApiSuccess(true, "Successfully unliked the post", null, false));
+  } else {
+    // User hasn't liked the post, so we add the user to the likes array
+    await isExistedPost.updateOne({ $addToSet: { likes: loggedInUser._id } });
+
+    return res
+      .status(200)
+      .json(new ApiSuccess(true, "Successfully liked the post", null, false));
+  }
+});
+
+
+module.exports = { createPost, getAllPosts, getSingleUserPosts,likeDislikePost };
