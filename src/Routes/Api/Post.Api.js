@@ -15,7 +15,7 @@ const { authguard } = require("../../Middlerware/authGuard");
 const { uploadImages } = require("../../Middlerware/multer.middleware");
 
 // Import controller functions
-const { createPost , getAllPosts , likeDislikePost, addCommentToPost , getSingleUserPosts } = require("../../Controller/post.Controller");
+const { createPost , getAllPosts , likeDislikePost, addCommentToPost , getSingleUserPosts, getComments } = require("../../Controller/post.Controller");
 
 // ========================
 // Post Routes for Instagram Clone
@@ -40,6 +40,9 @@ router.route("/users/:username").get(authguard, getSingleUserPosts);
 
 // like/dislike a post 
 router.route("/like-dislike/post/:postid").put(authguard, likeDislikePost)
+
+// Get all comments of a post  
+router.route("/get-comments/post/:postid").get(authguard, getComments);
 
 // Export the router for use in the main application
 module.exports = router;

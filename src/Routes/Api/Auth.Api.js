@@ -33,14 +33,14 @@ const {
 router.route("/signup").post(authguard, signupUser);
 
 // POST /login - Authenticate an existing user
-router.route("/login").post(authguard,  loginUser);
+router.route("/login").post(loginUser);
 
 // ========================
 // User Profile Routes
 // ========================
 
 // GET /:userName - Retrieve a user profile (Protected)
-router.route("/:userName").get( authguard, getUserProfile);
+router.route("/:userName").get(authguard, getUserProfile);
 
 // GET /accounts/logout - Log out the authenticated user (Protected)
 router.route("/accounts/logout").get(authguard, logOutUser);

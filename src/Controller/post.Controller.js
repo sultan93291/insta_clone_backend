@@ -251,10 +251,37 @@ const addCommentToPost = asyncHandler(async (req, res, next) => {
     );
 });
 
+const getComments = asyncHandler(async (req, res, next) => {
+  const { postid } = req.params; // Retrieve post ID from request parameters
+
+  // Check if the post exists
+  const isExistedPost = await postModel
+    .findById(postid)
+    .select("comments")
+    .populate({
+      path: "comments",
+      populate: { path: "author", select: "userName profilePicture" },
+    });
+  if (!isExistedPost) {
+    return next(new ApiError(404, "Post not found", null, false));
+  }
+
+  if (isExistedPost.comments.length < 1) {
+    return next(
+      new ApiSuccess(true, "current post has no comments", 200, null, false)
+    );
+  }
+
+  return res
+    .status(200)
+    .json(new ApiSuccess(true, "all comments", 200, isExistedPost.comments, false));
+});
+
 module.exports = {
   createPost,
   getAllPosts,
   getSingleUserPosts,
   likeDislikePost,
   addCommentToPost,
+  getComments
 };
