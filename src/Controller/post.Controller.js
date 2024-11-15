@@ -251,6 +251,7 @@ const addCommentToPost = asyncHandler(async (req, res, next) => {
     );
 });
 
+// get all comments of a post 
 const getComments = asyncHandler(async (req, res, next) => {
   const { postid } = req.params; // Retrieve post ID from request parameters
 
@@ -277,11 +278,53 @@ const getComments = asyncHandler(async (req, res, next) => {
     .json(new ApiSuccess(true, "all comments", 200, isExistedPost.comments, false));
 });
 
+const bookMarkPost = asyncHandler(async (req, res, next) => {
+  const { postid } = req.params;
+
+  // Check if the post exists
+  const post = await postModel.findById(postid);
+  if (!post) {
+    return next(new ApiError(404, "Post not found", null, false));
+  }
+
+  // Retrieve user information from token in cookie
+  const decodedData = await decodeSessionToken(req);
+  const loggedInUser = await userModel.findById(decodedData?.userData?.userId);
+  if (!loggedInUser) {
+    return next(
+      new ApiError(401, "Please log in again and try later", null, false)
+    );
+  }
+
+  // Check if the user has already bookmarked the post
+  const alreadyBookmarked = loggedInUser.bookmarks.includes(postid);
+
+  if (alreadyBookmarked) {
+    // Remove the bookmark
+    await loggedInUser.updateOne({ $pull: { bookmarks: postid } });
+    return res
+      .status(200)
+      .json(
+        new ApiSuccess(true, "Successfully unbookmarked the post", null, false)
+      );
+  } else {
+    // Add the bookmark
+    await loggedInUser.updateOne({ $push: { bookmarks: postid } });
+    return res
+      .status(200)
+      .json(
+        new ApiSuccess(true, "Successfully bookmarked the post", null, false)
+      );
+  }
+});
+
+
 module.exports = {
   createPost,
   getAllPosts,
   getSingleUserPosts,
   likeDislikePost,
   addCommentToPost,
-  getComments
+  getComments,
+  bookMarkPost
 };
