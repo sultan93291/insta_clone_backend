@@ -1,8 +1,8 @@
-// File: sendMessageController.js
+// File: message.controller.js
 // Author: Md. Abib Ahmed Dipto
 // Date: 2024-11-16
-// Description: Controller function for handling the "sendMessage" API endpoint,
-// allowing authenticated users to send messages to other users.
+// Description: Controller functions for handling message-related API endpoints,
+// allowing authenticated users to send and retrieve messages in the application.
 
 const { decodeSessionToken } = require("../Helpers/helper");
 const { conversationModel } = require("../Schema/conversation.model");
@@ -20,8 +20,6 @@ const { asyncHandler } = require("../Utils/asyncHandler");
  * @param {Object} res - Express response object for sending back responses.
  * @param {Function} next - Express middleware function for error handling.
  */
-
-
 const sendMessage = asyncHandler(async (req, res, next) => {
   const { id } = req.params; // The recipient's user ID
   const { message } = req.body; // The message content
@@ -32,7 +30,7 @@ const sendMessage = asyncHandler(async (req, res, next) => {
   }
 
   // Decode session token and fetch the logged-in user
-  const decodedData = await decodeSessionToken(req); // Ensure decodeSessionToken is properly implemented
+  const decodedData = await decodeSessionToken(req);
   const loggedInUser = await userModel.findById(decodedData?.userData?.userId);
 
   // Prevent users from messaging themselves
@@ -114,4 +112,70 @@ const sendMessage = asyncHandler(async (req, res, next) => {
     );
 });
 
-module.exports = { sendMessage };
+/**
+ * getMessage - Retrieves messages between the logged-in user and a recipient.
+ * @route GET /api/messages/:id
+ * @access Protected
+ * @param {Object} req - Express request object, contains user ID in params.
+ * @param {Object} res - Express response object for sending back responses.
+ * @param {Function} next - Express middleware function for error handling.
+ */
+const getMessage = asyncHandler(async (req, res, next) => {
+  const { id } = req.params; // The recipient's user ID
+
+  // Decode session token and fetch the logged-in user
+  const decodedData = await decodeSessionToken(req);
+  const loggedInUser = await userModel.findById(decodedData?.userData?.userId);
+
+  // Prevent users from messaging themselves
+  if (loggedInUser._id.toString() === id) {
+    return next(new ApiError(401, "You can't message yourself", null, false));
+  }
+
+  // Validation: Ensure the logged-in user exists
+  if (!loggedInUser) {
+    return next(
+      new ApiError(401, "Please log in again and try later", null, false)
+    );
+  }
+
+  // Fetch the recipient user
+  const reciverUser = await userModel.findById(id);
+
+  // Validation: Ensure the recipient exists
+  if (!reciverUser) {
+    return next(
+      new ApiError(
+        401,
+        "Receiver user doesn't exist, please try again later",
+        null,
+        false
+      )
+    );
+  }
+
+  const isPrevConversation = await conversationModel
+    .findOne({
+      participants: { $all: [loggedInUser._id, id] },
+    })
+    .populate({
+      path: "messages",
+      options: { sort: { createdAt: -1 } },
+    });
+
+  if (!isPrevConversation) {
+    return res
+      .status(200)
+      .json(
+        new ApiSuccess(true, "Currently no converstaion", 200, null, false)
+      );
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiSuccess(true, "All converstaion", 200, isPrevConversation, false)
+    );
+});
+
+module.exports = { sendMessage, getMessage };
