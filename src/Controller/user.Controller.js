@@ -20,7 +20,7 @@ const { ApiError } = require("../Utils/ApiError");
 const { ApiSuccess } = require("../Utils/ApiSuccess");
 const { asyncHandler } = require("../Utils/asyncHandler");
 const { emailChecker, passwordChecker } = require("../Utils/checker");
-const {uploadCloudinary} = require("../Utils/upCloudinary")
+const { uploadCloudinary } = require("../Utils/upCloudinary");
 const { promises } = require("nodemailer/lib/xoauth2");
 
 // secure cookies
@@ -109,10 +109,17 @@ const signupUser = asyncHandler(async (req, res, next) => {
     );
   }
 
+  const userData = {
+    userId: savedUser._id,
+    userName: savedUser.userName,
+    userEmail: savedUser.email,
+    isVerified: savedUser.isVerified,
+  };
+
   // Successful response
   return res
-    .status(201)
-    .json(new ApiSuccess(true, "User created successfully", 201, savedUser));
+    .status(200)
+    .json(new ApiSuccess(true, "User created successfully", 200, userData));
 });
 
 // Function to handle user login
@@ -245,7 +252,7 @@ const updateUser = asyncHandler(async (req, res, next) => {
   let imageurl;
 
   if (profilePicture) {
-    imageurl = await uploadCloudinary(profilePicture.path,"profilePicture");
+    imageurl = await uploadCloudinary(profilePicture.path, "profilePicture");
   }
 
   // Update only fields that are provided in the request
@@ -391,5 +398,5 @@ module.exports = {
   updateUser,
   logOutUser,
   getSuggestedUsers,
-  followAndUnfollow
+  followAndUnfollow,
 };
