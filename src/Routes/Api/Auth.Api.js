@@ -30,7 +30,7 @@ const {
 // ========================
 
 // POST /signup - Register a new user
-router.route("/signup").post(authguard, signupUser);
+router.route("/signup").post(signupUser);
 
 // POST /login - Authenticate an existing user
 router.route("/login").post(loginUser);
