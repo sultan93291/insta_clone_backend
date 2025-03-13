@@ -45,3 +45,5 @@ const uploadCloudinary = async (localFilePaths, folder) => {
 
 // Exporting the upload function for use in other modules
 module.exports = { uploadCloudinary };
+
+

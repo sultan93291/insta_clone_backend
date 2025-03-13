@@ -13,13 +13,10 @@ const express = require("express"); // Express framework for building APIs
 const chalk = require("chalk"); // Chalk for colorful console logs
 const cors = require("cors"); // CORS middleware for handling cross-origin requests
 const cookieParser = require("cookie-parser"); // Middleware for parsing cookies
+const {app , server} = require("./src/Socket/Socket")
 
 // Internal dependencies
 const allRoutes = require("./src/Routes/index"); // Import all defined routes
-
-// Initialize the router and app instances
-const app = express(); // Create an instance of the express app
-
 
 // Set up the server port, defaulting to 8000 if not specified
 const PORT = process.env.PORT || 8000; // Use environment variable or default to 8000
@@ -52,7 +49,7 @@ app.use((err, req, res, next) => {
 });
 
 // Start the server on the specified port and log a success message
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(
     chalk.bgBlueBright(
       `Listening on port http://localhost:${PORT}${process.env.API_VERSION}`
